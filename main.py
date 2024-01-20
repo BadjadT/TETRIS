@@ -3,6 +3,7 @@ import random
 import sys
 from pygame.locals import *
 
+# ОСНОВНЫЕ ПЕРЕМЕННЫЕ
 WIDTH, HEIGHT = 600, 500
 cell = 20
 game_height, game_width = 20, 10
@@ -22,6 +23,9 @@ board_col, text_col = colors[0], colors[0]
 title_col = block_col[3]
 info_col = block_col[0]
 bg_col = colors[1]
+
+block_width, block_height = 5, 5
+empty = 'o'
 
 
 def main():
@@ -44,8 +48,150 @@ def pause_scr():
     surf.blit(pause, (0, 0))
 
 
+# ВСЕ ФОРМЫ И их ВАРИАЦИИ
+shapes = {1: [['ooooo',
+               'ooooo',
+               'oxxoo',
+               'oxxoo',
+               'ooooo']],
+          2: [['ooxoo',
+               'ooxoo',
+               'ooxoo',
+               'ooxoo',
+               'ooooo'],
+              ['ooooo',
+               'ooooo',
+               'xxxxo',
+               'ooooo',
+               'ooooo']],
+          3: [['ooooo',
+               'ooooo',
+               'oxxoo',
+               'ooxxo',
+               'ooooo'],
+              ['ooooo',
+               'ooxoo',
+               'oxxoo',
+               'oxooo',
+               'ooooo']],
+          4: [['ooooo',
+               'ooooo',
+               'ooxxo',
+               'oxxoo',
+               'ooooo'],
+              ['ooooo',
+               'ooxoo',
+               'ooxxo',
+               'oooxo',
+               'ooooo']],
+          5: [['ooooo',
+               'ooxoo',
+               'oxxxo',
+               'ooooo',
+               'ooooo'],
+              ['ooooo',
+               'ooxoo',
+               'ooxxo',
+               'ooxoo',
+               'ooooo'],
+              ['ooooo',
+               'ooooo',
+               'oxxxo',
+               'ooxoo',
+               'ooooo'],
+              ['ooooo',
+               'ooxoo',
+               'oxxoo',
+               'ooxoo',
+               'ooooo']],
+          6: [['ooooo',
+               'oxooo',
+               'oxxxo',
+               'ooooo',
+               'ooooo'],
+              ['ooooo',
+               'ooxxo',
+               'ooxoo',
+               'ooxoo',
+               'ooooo'],
+              ['ooooo',
+               'ooooo',
+               'oxxxo',
+               'oooxo',
+               'ooooo'],
+              ['ooooo',
+               'ooxoo',
+               'ooxoo',
+               'oxxoo',
+               'ooooo']],
+          7: [['ooooo',
+               'oooxo',
+               'oxxxo',
+               'ooooo',
+               'ooooo'],
+              ['ooooo',
+               'ooxoo',
+               'ooxoo',
+               'ooxxo',
+               'ooooo'],
+              ['ooooo',
+               'ooooo',
+               'oxxxo',
+               'oxooo',
+               'ooooo'],
+              ['ooooo',
+               'oxxoo',
+               'ooxoo',
+               'ooxoo',
+               'ooooo']]
+          }
+
+
 def start_game():
-    pass
+    game = empty_game()
+    points = 0
+    level = game_level(points)
+    fall_speed = game_speed(level)
+    go_down = False
+    go_left = False
+    go_right = False
+    curr_block = get_block()
+    next_block = get_block()
+    while True:
+        if curr_block is None:
+            curr_block = next_block
+            next_block = get_block()
+
+            if not check(game, curr_block):
+                return
+        exit_game()
+        for event in pg.event.get():
+            if event.type == KEYUP:
+                if event.key == K_p:
+                    pause_scr()
+                    cen_text('Pause')
+
+            elif event.type == KEYDOWN:
+                if event.key == K_LEFT and check(game, curr_block, new_x=-1):
+                    curr_block['x'] -= 1
+
+                elif event.key == K_RIGHT and check(game, curr_block, new_x=1):
+                    curr_block['x'] += 1
+
+                elif event.key == K_UP:
+                    curr_block['variation'] = (curr_block['variation'] + 1) % len(shapes[curr_block['shape']])
+                    if not check(game, curr_block):
+                        curr_block['variation'] = (curr_block['variation'] - 1) % len(shapes[curr_block['shape']])
+
+                elif event.key == K_DOWN:
+                    if check(game, curr_block, new_y=1):
+                        curr_block['y'] += 1
+
+                elif event.key == K_SPACE:
+                    for i in range(1, game_height):
+                        if not check(game, curr_block, new_y=i):
+                            break
+                    curr_block['y'] += i - 1
 
 
 def cen_text(text):
@@ -85,3 +231,46 @@ def game_over():
 def text_opt(text, font, color):
     surf = font.render(text, True, color)
     return surf, surf.get_rect()
+
+
+def empty_game():
+    game = []
+    for i in range(game_width):
+        game.append([empty] * game_height)
+    return game
+
+
+def get_block():
+    shape = random.choice(list(shapes.keys()))
+    new_block = {'shape': shape,
+                 'variation': random.randint(0, len(shapes[shape]) - 1),
+                 'x': int(game_width / 2) - int(block_width / 2),
+                 'y': -2,
+                 'color': random.randint(0, len(block_col) - 1)}
+    return new_block
+
+
+def game_level(points):
+    level = 0
+    return level
+
+
+def game_speed(level):
+    pass
+
+
+def check(game, block, new_x=0, new_y=0):
+    for x in range(block_width):
+        for y in range(block_height):
+            not_in_game = y + block['y'] + new_y < 0
+            if not_in_game or shapes[block['shape']][block['variation']][y][x] == empty:
+                continue
+            if not 0 <= (x + block['x'] + new_x) < game_width and (y + block['y'] + new_y) < game_height:
+                return False
+            if game[x + block['x'] + new_x][y + block['y'] + new_y] != empty:
+                return False
+    return True
+
+
+if __name__ == '__main__':
+    main()
