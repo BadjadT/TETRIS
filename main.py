@@ -220,6 +220,7 @@ def start_game():
                     go_left = False
                     go_right = False
 
+        # УДЕРЖАНИЕ КЛАВИШИ
         if (go_left or go_right) and time.time() - latest_key_side > side_speed:
             if go_left and check(game, curr_block, new_x=-1):
                 curr_block['x'] -= 1
@@ -231,6 +232,7 @@ def start_game():
             curr_block['y'] += 1
             latest_key_down = time.time()
 
+        # СВОБОДНОЕ ПАДЕНИЕ
         if time.time() - latest_down > fall_speed:
             if not check(game, curr_block, new_y=1):
                 add_block(game, curr_block)
